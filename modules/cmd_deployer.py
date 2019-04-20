@@ -13,7 +13,7 @@ class CommandFuse:
     BASE_COMMAND_COLUMN = 'CMD'
     BASE_COMMAND_SEP = ';'
     _DATA_START_IDX = 1
-    # windows using \r\n it creates a werid output
+    # windows using \r\n for endline only use \n
     _NEW_LINE = '\n' 
 
     def __init__(self, data, commands, 
@@ -32,6 +32,14 @@ class CommandFuse:
         }
 
     def fuse(self):
+        """
+        Generates the commands
+
+        Returns
+        -------
+        generated_commands : []
+            One element is str
+        """
         generated_commands = []
         fuse_function = self._fuse_functions.get(self._separation_type)
         if not fuse_function:
@@ -40,6 +48,9 @@ class CommandFuse:
         return generated_commands
 
     def fuse_to_file(self, path):
+        """
+        Saves the generated output to the provided path
+        """
         generated_commands = self.fuse()
         
         with open(path, 'w') as to_save:
@@ -47,6 +58,14 @@ class CommandFuse:
             to_save.write(command_str)
 
     def _group_fuse(self):
+        """
+        Implements the group command generation
+
+        Retunrs
+        -------
+        generated_commands : []
+            One element is str
+        """
         command_dict = {}
         index = CommandFuse._DATA_START_IDX
         for row in self._data:
@@ -71,6 +90,14 @@ class CommandFuse:
         return generated_commads
 
     def _seq_fuse(self):
+        """
+        Implements the sequential fuse 
+        
+        Returns
+        -------
+        generated_commands : []
+            One element is str
+        """
         generated_commands = []
         index = CommandFuse._DATA_START_IDX
         for row in self._data:

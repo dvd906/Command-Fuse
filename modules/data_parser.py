@@ -6,8 +6,7 @@ from collections import OrderedDict
 
 import xlrd
 # https://blogs.harvard.edu/rprasad/2014/06/16/reading-excel-with-python-xlrd/
-# TODO: if no file extension try to get the data -> binary reading in python
-#       Must work with .xlsx .xls .tsv and .csv rb
+import modules.cmd_fuse_exception as cmd_fuse_exception
 
 class DataParser:
 
@@ -42,16 +41,30 @@ class RawDataParser(DataParser):
     """
     _XLS_PATTERN = '\.xls'
     _TSV_PATTERN = '\.tsv'
+    _CSV_PATTERN = '\.csv'
 
     def __init__(self, path):
-        self._dialect = 'excel'
+        """
+        Params
+        ------
+        path : str
+            The file's path
+        Raises
+        ------
+        TypeError
+            When the file extension is not supported
+        """
+        self._dialect = None
         self._is_file_excel = False
 
         if re.search(RawDataParser._XLS_PATTERN, path):
             self._is_file_excel = True
-
-        if re.search(RawDataParser._TSV_PATTERN, path):
+        elif re.search(RawDataParser._TSV_PATTERN, path):
             self._dialect = 'excel-tab'
+        elif re.search(RawDataParser._CSV_PATTERN, path):
+            self._dialect = 'excel'
+        else:
+            raise TypeError('Not supported file format')
         return super().__init__(path)
     
     def _get_data(self, path):

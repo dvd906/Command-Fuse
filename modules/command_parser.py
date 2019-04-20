@@ -7,8 +7,20 @@ import modules.data_parser        as data_parser
 import modules.cmd_fuse_exception as cmd_fuse_exception
 
 class OneCommand:
-
+    """
+    Represents a single command which can be generated
+    """
     def __init__(self, cmd_id, cmd_str, required_cols):
+        """
+        Params
+        ------
+        cmd_id : str
+            The command name to refer later in datasheet
+        cmd_str : str
+            The raw string command
+        required_cols : []
+            The required columns to substitute for generating
+        """
         self._cmd_id = cmd_id
         self._cmd_str = cmd_str
         self._requried_columns = required_cols
@@ -109,6 +121,13 @@ class CommandPackage(data_parser.DataParser):
         return self._package_name
 
     def deploy(self):
+        """
+        Creates the package
+        Returns
+        -------
+        dict
+            JSON ready object
+        """
         json_ready_dict = {}
         for command in self.data:
             key = command.cmd_id
@@ -119,6 +138,13 @@ class CommandPackage(data_parser.DataParser):
         return json_ready_dict
 
     def deploy_package(self, path):
+        """
+        Writes the package into the path
+        Params
+        ------
+        path : str
+            The file to write
+        """
         json_ready_commands = self.deploy()
         if os.path.isdir(path):
             path = path + os.sep + self._package_name
