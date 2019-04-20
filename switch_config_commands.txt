@@ -1,4 +1,0 @@
-ip_config : config config_ip --ip "[IP]" --mask"[MASK]"
-gateway_config : gateway_config --ip [GATEWAY_IP] --interface [INTERFACE]
-set_name : config config_name --name [NAME]
-restart_host : config restart --name [NAME]
