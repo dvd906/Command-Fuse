@@ -1,0 +1,28 @@
+{
+    "ip_config": {
+        "required_columns": [
+            "IP",
+            "MASK"
+        ],
+        "command": " config config_ip --ip \"IP\" --mask\"MASK\""
+    },
+    "gateway_config": {
+        "required_columns": [
+            "GATEWAY_IP",
+            "INTERFACE"
+        ],
+        "command": " gateway_config --ip GATEWAY_IP --interface INTERFACE"
+    },
+    "set_name": {
+        "required_columns": [
+            "NAME"
+        ],
+        "command": " config config_name --name NAME"
+    },
+    "restart_host": {
+        "required_columns": [
+            "NAME"
+        ],
+        "command": " config restart --name NAME"
+    }
+}
