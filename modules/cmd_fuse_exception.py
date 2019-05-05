@@ -16,10 +16,15 @@ class CommandParseError(CommandFuseError):
 class CannotGenerateCommandError(CommandFuseError):
 
     def __init__(self, command_name, missing_columns):
+        self._missing_columns = missing_columns
         self._message = "Cannot generate \'{}\' ".format(command_name)
         self._message += "the following column(s) missing: {}".format(
             missing_columns
         )
+
+    @property
+    def missing_columns(self):
+        return self._missing_columns
 
     def __str__(self):
         return self._message
@@ -56,6 +61,15 @@ class ColumnSyntaxError(CommandFuseError):
 
     def __init__(self, missing_col):
         self._message = 'Missing column parenthesis \'{}\''.format(missing_col)
+
+    def __str__(self):
+        return self._message
+
+class DuplicatedCommandIdError(CommandFuseError):
+
+    def __init__(self, duplicated_id):
+        self._id = duplicated_id
+        self._message = "Duplicated command id \'{}\'".format(duplicated_id)
 
     def __str__(self):
         return self._message

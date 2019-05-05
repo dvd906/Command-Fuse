@@ -54,7 +54,8 @@ class OneCommand:
         if self._is_data_avialable(data):
             generated_cmd = self._cmd_str
             for col in self._requried_columns:
-                generated_cmd = re.sub(col, data[col], generated_cmd)
+                str_value = str(data[col])
+                generated_cmd = re.sub(col, str_value, generated_cmd)
             return generated_cmd.strip()
         else:
             missing_cols = self._get_missing_columns(data)
@@ -90,14 +91,14 @@ class CommandPackage(data_parser.DataParser):
     _JSON_INDENT = 4
     _VALID_PARENTHESIS = 1
 
-    def __init__(self, path=None, package_name=_BASE_PACKAGE_NAME, separator=BASE_SEPARATOR,
+    def __init__(self, input_str=None, package_name=_BASE_PACKAGE_NAME, separator=BASE_SEPARATOR,
        col_sub_left=COL_SUB_LEFT, col_sub_right=COL_SUB_RIGHT,
        to_replace=TO_REPLACE):
         """
         Params
         ------
-        path : str
-            The file path
+        input_str : str
+            The input to extract
         package_name : str
             The command's package name
         separator : str
@@ -114,7 +115,7 @@ class CommandPackage(data_parser.DataParser):
         self._col_sub_left = col_sub_left
         self._col_sub_right = col_sub_right
         self._to_replace = to_replace
-        return super().__init__(path)
+        return super().__init__(input_str)
 
     @property
     def package_name(self):
@@ -163,11 +164,17 @@ class CommandPackage(data_parser.DataParser):
         -------
         commands : []
             One element is a OneCommand
+        Raises
+        ------
+        DuplicatedCommandIDError 
+            When two commands called the same id
         """
+        print('parse commands')
         commands = {}
         with open(path) as package_file:
             lines_str = ''.join(package_file.readlines())
-            json_commands = json.loads(lines_str)
+            json_commands = json.loads(lines_str, object_pairs_hook=self._check_multiply)
+            print(json_commands)
             for cmd_id in json_commands:
                 command_prop = json_commands[cmd_id]
                 one_command = OneCommand(cmd_id, 
@@ -176,36 +183,51 @@ class CommandPackage(data_parser.DataParser):
                 commands[cmd_id] = one_command
         return commands
 
-    def _get_data(self, path):
+    def _get_data(self, input_str):
         """
         Returns
         -------
         commands : []
             Where one element is an OneCommand
+        Raises
+        ------
+        OSError
+            When file path is provided
+        CommandParseError
+            When cannot parse a command
         """
-        rows = None
-        with open(path) as cmd_file:
-            rows = cmd_file.read().splitlines()
-        cmds = []
-        index = 0
-        for one_row in rows:
-            split_cmd = one_row.split(self._separator)
+        if os.path.isfile(input_str):
+            raise OSError(
+                'Cannot open the file only works with str input'
+            )
 
-            if len(split_cmd) == CommandPackage._SPLITTED_COMMAND_LENGTH:
-                cmd = OrderedDict()
-                cmd_id = split_cmd[0].strip()
-                required_cols = None
-                try:
+        rows = input_str.splitlines()
+        cmds = []
+        cmd_ids = []
+        index = 0
+        try:
+            for one_row in rows:
+                split_cmd = one_row.split(self._separator)
+                if len(split_cmd) == CommandPackage._SPLITTED_COMMAND_LENGTH:
+                    cmd = OrderedDict()
+                    cmd_id = split_cmd[0].strip()
+                    if cmd_id in cmd_ids:
+                        raise cmd_fuse_exception.DuplicatedCommandIdError(cmd_id)
+                    cmd_ids.append(cmd_id)
                     required_cols = self._get_required_cols(split_cmd[1])
-                except cmd_fuse_exception.ColumnSyntaxError as syntax_err:
-                    error_str = str(syntax_err)
-                    raise cmd_fuse_exception.CommandParseError(index, error_str)
-                command = split_cmd[1].replace(self._col_sub_left, self._to_replace)
-                command = command.replace(self._col_sub_right, self._to_replace)
-                cmds.append(OneCommand(cmd_id, command, required_cols))
-            else:
-                raise cmd_fuse_exception.CommandParseError(index)
-            index = index + 1
+                    command = split_cmd[1].replace(self._col_sub_left, self._to_replace)
+                    command = command.replace(self._col_sub_right, self._to_replace)
+                    cmds.append(OneCommand(cmd_id, command, required_cols))
+                else:
+                    raise cmd_fuse_exception.CommandParseError(index)
+                index = index + 1
+        except cmd_fuse_exception.ColumnSyntaxError as syntax_err:
+            error_str = str(syntax_err)
+            raise cmd_fuse_exception.CommandParseError(index, error_str)
+        except cmd_fuse_exception.DuplicatedCommandIdError as duplicated_err:
+            error_str = str(duplicated_err)
+            raise cmd_fuse_exception.CommandParseError(index, error_str)
+
         return cmds
     
     def _get_required_cols(self, raw_command):
@@ -240,3 +262,12 @@ class CommandPackage(data_parser.DataParser):
             else:
                 raise cmd_fuse_exception.ColumnSyntaxError(self._col_sub_right)
         return cols
+
+    def _check_multiply(self, ordered_pairs):
+        dictionary = {}
+        for key, value in ordered_pairs:
+            if key in dictionary:
+               raise cmd_fuse_exception.DuplicatedCommandIdError(key)
+            else:
+               dictionary[key] = value
+        return dictionary
